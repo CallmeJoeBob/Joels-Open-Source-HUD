@@ -3,7 +3,7 @@
 # Import the pins for i2c bus 0
 from board import D0, D1
 import busio
-import adafruit_ssd1306
+from display import adafruit_ssd1306
 import socket
 
 # Initialize display
