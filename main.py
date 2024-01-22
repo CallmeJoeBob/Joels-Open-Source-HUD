@@ -26,9 +26,10 @@ def clear_display():
 def write_battery():
   client.send(('get battery').encode())
   response = client.recv(4096)
-  display.text(str(response), 0, 0, 1)
+  display.text(str(response), 0, 0, 1, wrap=True)
   display.show()
 
 # Start main
 clear_display()
 write_battery()
+display.show()

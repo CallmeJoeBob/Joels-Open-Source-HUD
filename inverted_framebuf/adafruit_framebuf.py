@@ -167,6 +167,10 @@ class MVLSBFormat:
 
     @staticmethod
     def fill_rect(framebuf, x, y, width, height, color):
+        """Add a initial flip of x and y coords to invert the screen."""
+        # x, y = y, x
+        # width, height = height, width
+
         """Draw a rectangle at the given location, size and color. The ``fill_rect`` method draws
         both the outline and interior."""
         # pylint: disable=too-many-arguments
@@ -297,8 +301,9 @@ class FrameBuffer:
     def __init__(self, buf, width, height, buf_format=MVLSB, stride=None):
         # pylint: disable=too-many-arguments
         self.buf = buf
-        self.width = width
-        self.height = height
+        """Swapping height and width"""
+        self.width = height
+        self.height = width
         self.stride = stride
         self._font = None
         if self.stride is None:
@@ -339,7 +344,6 @@ class FrameBuffer:
         self.rect(x, y, width, height, color, fill=True)
 
     def pixel(self, x, y, color=None):
-
         """Add a initial flip of x and y coords to invert the screen."""
         x, y = y, x
 
@@ -397,6 +401,10 @@ class FrameBuffer:
                 err += d_x - (radius << 1)
 
     def rect(self, x, y, width, height, color, *, fill=False):
+        """Add a initial flip of x and y coords to invert the screen."""
+        x, y = y, x
+        width, height = height, width
+
         """Draw a rectangle at the given location, size and color. The ```rect``` method draws only
         a 1 pixel outline."""
         # pylint: disable=too-many-arguments
@@ -494,33 +502,54 @@ class FrameBuffer:
             y += dt_y
 
     # pylint: disable=too-many-arguments
-    def text(self, string, x, y, color, *, font_name="font5x8.bin", size=1):
-        """Place text on the screen in variables sizes. Breaks on \n to next line.
+    def text(self, string, x, y, color, *, font_name="font5x8.bin", size=1, wrap=False):
+        """Place text on the screen in variables sizes. Breaks on \n to next line, or on
+        out of bounds if wrap is set to true, but not both as of yet."""
 
-        Does not break on line going off screen.
-        """
+        """Add a initial flip of x and y coords to invert the screen, and flip height/width"""
+        x, y = y, x
         # determine our effective width/height, taking rotation into account
-        frame_width = self.width
-        frame_height = self.height
+        frame_width = self.height
+        frame_height = self.width
         if self.rotation in (1, 3):
             frame_width, frame_height = frame_height, frame_width
 
-        for chunk in string.split("\n"):
+        if (wrap):
             if not self._font or self._font.font_name != font_name:
                 # load the font!
                 self._font = BitmapFont(font_name)
-            width = self._font.font_width
-            height = self._font.font_height
-            for i, char in enumerate(chunk):
-                char_x = x + (i * (width + 1)) * size
-                if (
-                    char_x + (width * size) > 0
-                    and char_x < frame_width
-                    and y + (height * size) > 0
-                    and y < frame_height
-                ):
-                    self._font.draw_char(char, char_x, y, self, color, size=size)
-            y += height * size
+                width = self._font.font_width
+                height = self._font.font_height
+                char_x = x
+                for i, char in enumerate(string):
+                    if (char_x + (width * size) > frame_width):
+                        char_x = x
+                        y += height * size
+                    if (
+                        char_x + (width * size) > 0
+                        and char_x < frame_width
+                        and y + (height * size) > 0
+                        and y < frame_height
+                    ):
+                        self._font.draw_char(char, char_x, y, self, color, size=size)
+                    char_x += (width + 1) * size
+        else:
+            for chunk in string.split("\n"):
+                if not self._font or self._font.font_name != font_name:
+                    # load the font!
+                    self._font = BitmapFont(font_name)
+                width = self._font.font_width
+                height = self._font.font_height
+                for i, char in enumerate(chunk):
+                    char_x = x + (i * (width + 1)) * size
+                    if (
+                        char_x + (width * size) > 0
+                        and char_x < frame_width
+                        and y + (height * size) > 0
+                        and y < frame_height
+                    ):
+                        self._font.draw_char(char, char_x, y, self, color, size=size)
+                y += height * size
 
     # pylint: enable=too-many-arguments
 
@@ -619,6 +648,7 @@ class BitmapFont:
         #   y < -self.font_height or y >= framebuffer.height:
         #    return
         # Go through each column of the character.
+
         for char_x in range(self.font_width):
             # Grab the byte for the current column of font data.
             self._font.seek(2 + (ord(char) * self.font_width) + char_x)
