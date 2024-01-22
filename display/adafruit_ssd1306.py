@@ -26,7 +26,7 @@ import, so we can skip the try catch."""
 #     # CircuitPython framebuf import
 #     import adafruit_framebuf as framebuf
 #     _FRAMEBUF_FORMAT = framebuf.MVLSB
-from framebuf import adafruit_framebuf as framebuf
+from ..framebuf import adafruit_framebuf as framebuf
 _FRAMEBUF_FORMAT = framebuf.MVLSB
 
 try:
