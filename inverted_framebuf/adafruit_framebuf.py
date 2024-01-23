@@ -506,8 +506,7 @@ class FrameBuffer:
         """Place text on the screen in variables sizes. Breaks on \n to next line, or on
         out of bounds if wrap is set to true, but not both as of yet."""
 
-        """Add a initial flip of x and y coords to invert the screen, and flip height/width"""
-        x, y = y, x
+        """flip height/width"""
         # determine our effective width/height, taking rotation into account
         frame_width = self.height
         frame_height = self.width

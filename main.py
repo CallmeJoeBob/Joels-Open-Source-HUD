@@ -1,10 +1,11 @@
 # Python application to run Joel's Open Source HUD (Josh)
 
-# Import the pins for i2c bus 0
+# Imports
 from board import D0, D1
 import busio
 from display import adafruit_ssd1306
 import socket
+from datetime import datetime
 
 # Initialize display
 i2c = busio.I2C(D1, D0)
@@ -20,16 +21,42 @@ client.connect((host,port))
 # update visible!
 def clear_display():
   display.fill(0)
-  display.show()
+
+# Draw corner borders
+def draw_borders():
+  display.line(1,50,10,50, 1)
+  display.line(1,50,1,60, 1)
+  display.line(63,50,53,50, 1)
+  display.line(63,50,63,60, 1)
+  display.line(1,127,10,127, 1)
+  display.line(1,127,1,117, 1)
+  display.line(63,127,53,127, 1)
+  display.line(63,127,63,117, 1)
 
 # Show battery
 def write_battery():
   client.send(('get battery').encode())
   response = client.recv(4096)
-  display.text(str(response), 0, 0, 1, wrap=True)
-  display.show()
+  battery_percentage = int(float(str(response).replace('b\'', '').replace('\\n\'', '').replace('battery: ', '')))
+
+  # Battery logo
+  display.line(20,119,25,119, 1)
+  display.line(20,125,25,125, 1)
+  display.line(20,119,20,125, 1)
+  display.line(25,119,25,125, 1)
+  display.line(22,118,23,118, 1)
+
+  display.text(str(battery_percentage), 30, 119, 1, wrap=False)
+
+def write_time():
+  now = datetime.now()
+  current_time = now.strftime("%-I:%M %p")
+  display.text(current_time, 10, 53, 1, wrap=False)
 
 # Start main
-clear_display()
-write_battery()
-display.show()
+while(True):
+  clear_display()
+  draw_borders()
+  write_time()
+  write_battery()
+  display.show()
