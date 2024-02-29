@@ -6,16 +6,21 @@ import busio
 from display import adafruit_ssd1306
 import socket
 from datetime import datetime
+import asyncio
+import time
+
+# Pull fonts
+SMALL_FONT = str(__file__.replace('/main.py', '/font5x8.bin'))
 
 # Initialize display
 i2c = busio.I2C(D1, D0)
 display = adafruit_ssd1306.SSD1306_I2C(128, 64, i2c)
 
 #Initialize socket server for battery
-host = "127.0.0.1"
-port = 8423
+HOST = "127.0.0.1"
+PORT = 8423
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect((host,port))
+client.connect((HOST,PORT))
 
 # Clear the display.  Always call show after changing pixels to make the display
 # update visible!
@@ -46,17 +51,28 @@ def write_battery():
   display.line(25,119,25,125, 1)
   display.line(22,118,23,118, 1)
 
-  display.text(str(battery_percentage), 30, 119, 1, wrap=False)
+  display.text(str(battery_percentage), 30, 119, 1, font_name=SMALL_FONT, wrap=False)
 
 def write_time():
   now = datetime.now()
   current_time = now.strftime("%-I:%M %p")
-  display.text(current_time, 10, 53, 1, wrap=False)
+  display.text(current_time, 10, 53, 1, font_name=SMALL_FONT, wrap=False)
+
+def display_base_screen(loop):
+  while True:
+    try:
+      clear_display()
+      draw_borders()
+      write_time()
+      write_battery()
+      display.show()
+    except:
+      print("Unable to update display.")
+    time.sleep(1)
+
 
 # Start main
-while(True):
-  clear_display()
-  draw_borders()
-  write_time()
-  write_battery()
-  display.show()
+loop = asyncio.get_event_loop()
+
+loop.call_soon(display_base_screen, loop)
+loop.run_forever()
